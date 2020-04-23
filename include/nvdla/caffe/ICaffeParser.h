@@ -72,7 +72,6 @@ public:
                                            INetwork* network)= 0;
     virtual int identifyOutputs(INetwork* network) = 0;
     virtual ~ICaffeParser();
-    virtual const IBlobNameToTensor* buildNetworkDemo(INetwork* netowork) = 0;
 };
 
 ICaffeParser *createCaffeParser();

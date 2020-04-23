@@ -46,4 +46,4 @@ include rules.mk
 # the logic to compile and link stuff is in here
 $(LIB): $(ALLMODULE_OBJS)
 	@echo building $(MODULE)  $@
-	g++ -shared libprotobuf.a $(ALLMODULE_OBJS) -o $@
+	g++ -shared /home/dev/protobuf/lib/libprotobuf.so $(ALLMODULE_OBJS) -o $@

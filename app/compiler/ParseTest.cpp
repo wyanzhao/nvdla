@@ -153,8 +153,7 @@ static NvDlaError parseCaffeNetwork(const TestAppArgs* appArgs, TestInfo* i)
         ORIGINATE_ERROR_FAIL(NvDlaError_BadParameter, "createNetwork() failed");
 
     NvDlaDebugPrintf("parsing caffe network...\n");
-    //b = parser->parse(caffePrototxtFile.c_str(), caffeModelFile.c_str(), network);
-    b = parser->buildNetworkDemo(network);
+    b = parser->parse(caffePrototxtFile.c_str(), caffeModelFile.c_str(), network);
     if (!b)
         ORIGINATE_ERROR_FAIL(NvDlaError_BadParameter, "Unable to parse caffemodel: \"%s\"", caffePrototxtFile.c_str());
 

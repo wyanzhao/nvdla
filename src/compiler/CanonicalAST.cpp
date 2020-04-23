@@ -416,15 +416,6 @@ void canonical_ast::ConvolutionNode::captureNetworkParams(ConvolutionLayer* orig
     params().setDilation(origNwLayer->getDilation());
     params().setWeights(origNwLayer->getKernelWeights());
 
-    // TODO
-    auto weights = params().weights();
-    std::cout<<"Weights value: "<< weights.values<< std::endl;
-    auto values = weights.values;
-    printf("Weights value1: %f\n", *(float *)values);
-    printf("Weights value2: %f\n", *((float *)values + 1));
-
-    std::cout<< "Weights count: "<< weights.count<< std::endl;
-    // TODO END
     params().setBiasData(origNwLayer->getBiasWeights());
     params().setNumGroups(origNwLayer->getNumGroups());
     NvU32 kernChannels  = params().weights().count/

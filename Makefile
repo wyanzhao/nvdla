@@ -27,7 +27,8 @@
 TOP := ${CURDIR}
 
 COMPILER_SUBDIRS = src/compiler \
-	app/compiler
+	#app/relu_5737
+	#app/compiler
 
 compiler:
 	for dir in $(COMPILER_SUBDIRS); do \

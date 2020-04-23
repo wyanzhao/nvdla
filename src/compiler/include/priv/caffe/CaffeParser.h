@@ -116,9 +116,6 @@ public:
                                            const char* model,
                                            INetwork* network);
 
-    // TODO
-    virtual const IBlobNameToTensor* buildNetworkDemo(nvdla::INetwork* network);
-    // TODO END
     virtual int identifyOutputs(INetwork * network);
     virtual ~CaffeParser();
 
