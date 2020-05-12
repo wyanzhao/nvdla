@@ -43,9 +43,8 @@ all:: $(TEST_BIN)
 
 include rules.mk
 
-#g++ $(ALLMODULE_OBJS) -L$(ROOT)/out/ libprotobuf.a -lnvdla_compiler -pthread -o $@ libprotobuf.a -Wl,-rpath=.
 # the logic to compile and link stuff is in here
 $(TEST_BIN): $(ALLMODULE_OBJS) $(SHARED_LIBS)
 	@echo building $(MODULE)  $@
-	g++ $(ALLMODULE_OBJS) /home/dev/protobuf/lib/libprotobuf.so -L/home/dev/Workspace/tvm/nvdla/out -lnvdla_compiler -pthread -o $@ -Wl,-rpath=.
+	g++ $(ALLMODULE_OBJS) -L/home/dev/Workspace/tvm/nvdla/out libprotobuf.a -lnvdla_compiler -pthread -o $@ libprotobuf.a -Wl,-rpath=.
 

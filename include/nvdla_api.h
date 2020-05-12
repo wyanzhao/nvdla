@@ -118,18 +118,34 @@ extern "C" {
 
 
 TVM_DLL void nvdlaInit();
-TVM_DLL void addInputOp(size_t input_name, int n, int c, int h, int w);
+TVM_DLL void addInputOp(const char*  input_name, int n, int c, int h, int w);
 TVM_DLL nvdla::Weights* addFloatWeights(const void* values, uint64_t count);
-TVM_DLL void addConvOp(size_t input_name, size_t conv_name, int numOutputChannels,
+TVM_DLL void addConvOp(const char*  input_name, const char*  op_name, int numOutputChannels,
                                            int kernelH, int kernelW, 
                                            int padH, int padW, 
                                            int strideH, int strideW,
                                            int dilationH, int dilationW,
                                            const nvdla::Weights* weights, const nvdla::Weights* bias_weights, int numGroups);
 
-TVM_DLL void addReluOp(size_t input_name, size_t relu_name);
-TVM_DLL void nvdlaCompile();
-TVM_DLL int nvdlaDoNothing() {printf("HelloWorld\n");};
+TVM_DLL void addReluOp(const char*  input_name, const char*  op_name);
+TVM_DLL void addSoftMaxOp(const char*  input_name, const char*  op_name);
+TVM_DLL void addFullyConnected(const char*  input_name, const char*  op_name, const nvdla::Weights* weights,
+                               const nvdla::Weights* bias_weights, int64_t num_output);
+
+TVM_DLL void addMaxPooling(const char*  input_name, const char*  op_name, int kernelH, int kernelW,
+                        int padH, int padW, int strideH, int strideW, int has_global_pooling);
+
+TVM_DLL void addAveragePooling(const char*  input_name, const char*  op_name, int kernelH, int kernelW,
+                        int padH, int padW, int strideH, int strideW, int has_global_pooling);
+
+TVM_DLL static void addPooling(const char*  input_name, const char*  op_name, int kernelH, int kernelW,
+                        int padH, int padW, int strideH, int strideW, nvdla::PoolingType type, bool has_global_pooling);
+
+TVM_DLL NvDlaError nvdlaCompile();
+TVM_DLL void nvdlaDoNothing() {;};
+TVM_DLL void addScaleInfo(const char * name, float scale, float min, float max, int offset);
+TVM_DLL NvDlaError addQuantizationInfo(const TestAppArgs* appArgs, TestInfo *i, nvdla::INetwork* network);
+TVM_DLL void setNvdlaConfig( const char* config_name, const char *cprecision);
 
 #ifdef __cplusplus
 }

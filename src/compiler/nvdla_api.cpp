@@ -7,12 +7,14 @@
 #include <memory>
 #include <cstring>
 #include <set>
+#include <unordered_map>
 
 #define DEFAULT_BATCH_SIZE 0
 #define DEFAULT_DATA_FMT nvdla::DataFormat::NCHW
 #define DEFAULT_QUANT_MODE nvdla::QuantizationMode::NONE
 #define TARGET_CONFIG_NAME "nv_full"
 
+// TODO: Remember to change configuratio here
 static TestAppArgs defaultTestAppArgs =
 {
     /* .project = */ "OpenDLA",
@@ -34,6 +36,22 @@ static TestAppArgs defaultTestAppArgs =
     /* .computePrecision = */ nvdla::DataType::HALF
 };
 
+class ScaleInfo {
+private:
+    float m_min;
+    float m_max;
+    float m_scale;
+public:
+    float getMin() {return m_min;};
+    float getMax() {return m_max;};
+    float getScale() {return m_scale;};
+    void setMin(float min){m_min = min;};
+    void setMax(float max) {m_max = max;};
+    void setScale(float scale) {m_scale = scale;};
+};
+
+static std::unordered_map<std::string, ScaleInfo*> scale_map;
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -44,6 +62,120 @@ static TestAppArgs testAppArgs = defaultTestAppArgs;
 static TestInfo* testInfo = nullptr;
 static nvdla::INetwork* network = nullptr;
 static nvdla::caffe::IBlobNameToTensor* blobNameToTensor = nullptr;
+
+TVM_DLL void setNvdlaConfig( const char* config_name, const char *cprecision)
+{
+    std::string computePrecision(cprecision);
+
+    if (computePrecision == "fp16")
+        testAppArgs.computePrecision = nvdla::DataType::HALF;
+    else if (computePrecision == "int8")
+        testAppArgs.computePrecision = nvdla::DataType::INT8;
+    else {
+        testAppArgs.computePrecision = nvdla::DataType::UNKNOWN;
+        std::cout<< "UNKNOWN Compute Precision"<< std::endl;
+        }
+        
+    testAppArgs.configtarget = std::string(config_name);
+
+    std::cout<< "Current configuration: "<< testAppArgs.configtarget<< " "<< computePrecision<< std::endl;
+}
+
+TVM_DLL void addScaleInfo(const char * name, float scale, float min, float max, int offset)
+{   
+    std::string name_(name);
+    ScaleInfo* scale_info = new(ScaleInfo);
+    scale_info->setMin(min);
+    scale_info->setMax(max);
+    scale_info->setScale(scale);
+    auto it = scale_map.find(name_);
+    if (it == scale_map.end())
+    {
+        std::pair<std::string, ScaleInfo*> name_pair (name_, scale_info);
+        scale_map.insert(name_pair);
+    }
+}
+
+TVM_DLL NvDlaError addQuantizationInfo(const TestAppArgs* appArgs, TestInfo *i, nvdla::INetwork* network)
+{
+    NvDlaError e = NvDlaSuccess;
+    NvDlaStatType stat;
+
+    // populate the scaling factor/dynamic range of each of the tensors on the network
+    {
+        {
+            std::vector<nvdla::ILayer*> networkLayers = network->getLayers();
+            std::vector<nvdla::ITensor*> networkInputs = network->getInputs();
+
+            std::vector<nvdla::ILayer*>::iterator li = networkLayers.begin();
+            std::vector<nvdla::ITensor*>::iterator nii = networkInputs.begin();
+
+            // set scaling factor for the network input tensors
+            for (; nii != networkInputs.end(); ++nii)
+            {
+                NvF32 scale = 0.0f;
+                NvF32 min = 0.0f;
+                NvF32 max = 0.0f;
+                std::string tName = (*nii)->getName();
+                auto it = scale_map.find(tName);
+                if (it != scale_map.end())
+                {
+                    ScaleInfo* scale_info = it->second;
+                    scale = scale_info->getScale();
+                    if(scale != 0)
+                    {
+                        min = scale * -127.0f;
+                        max = scale * 127.0f;
+                    } else {
+                        min = scale_info->getMin() * -127.0f;
+                        max = scale_info->getMax() * 127.0f;
+                    }
+                    
+                } else {
+                    ORIGINATE_ERROR_FAIL(NvDlaError_BadParameter, "Atleast 1 of scale or min-max should be specified for %s\n", tName.c_str());
+                }
+
+                // set same dynamic range for all channels of the tensor (cIndex = -1)
+                (*nii)->setChannelDynamicRange(-1, min, max);
+                const_cast<TestAppArgs*>(appArgs)->tensorScales.insert(std::pair<std::string, NvF32>(tName, scale));
+            }
+
+            for (; li != networkLayers.end(); ++li)
+            {
+                NvF32 scale = 0.0f;
+                NvF32 min = 0.0f;
+                NvF32 max = 0.0f;
+                std::string lName = (*li)->getName();
+                nvdla::ITensor* outTensor = (*li)->getOutput(0);
+                auto it = scale_map.find(lName);
+                if (it != scale_map.end())
+                {
+                    ScaleInfo* scale_info = it->second;
+                    scale = scale_info->getScale();
+                    if(scale != 0)
+                    {
+                        min = scale * -127.0f;
+                        max = scale * 127.0f;
+                    } else {
+                        min = scale_info->getMin() * -127.0f;
+                        max = scale_info->getMax() * 127.0f;
+                    }
+                }
+                else {
+                    ORIGINATE_ERROR_FAIL(NvDlaError_BadParameter, "Atleast 1 of scale or min-max should be specified for %s\n", lName.c_str());
+                }
+
+                // set same dynamic range for all channels of the tensor (cIndex = -1)
+                outTensor->setChannelDynamicRange(-1, min, max);
+                const_cast<TestAppArgs*>(appArgs)->tensorScales.insert(std::pair<std::string, NvF32>(lName, scale));
+            }
+        }
+    }
+
+fail:
+    return e;
+}
+
 
 NvDlaError parseTensorScales(const TestAppArgs* appArgs, TestInfo *i, nvdla::INetwork* network)
 {
@@ -589,7 +721,7 @@ static int identifyOutputs(nvdla::INetwork * network)
     return network->getNumOutputs();
 }
 
-void nvdlaCompile()
+NvDlaError nvdlaCompile()
 {
     NvDlaError e = NvDlaSuccess;
     
@@ -604,16 +736,17 @@ void nvdlaCompile()
 
     if (testAppArgs.computePrecision == nvdla::DataType::INT8)
     {
-        if (testAppArgs.calibTable != "")  // parse and set tensor scales
-        {
-            NvDlaDebugPrintf("parsing calibration table...\n");
-            PROPAGATE_ERROR_FAIL(parseTensorScales(&testAppArgs, testInfo, network));
-        }
-        else    // use default or const scaling factors
-        {
-            NvDlaDebugPrintf("initialize all tensors with const scaling factors of 127...\n");
-            PROPAGATE_ERROR_FAIL(generateTensorScales(&testAppArgs, testInfo, network));
-        }
+        PROPAGATE_ERROR_FAIL(addQuantizationInfo(&testAppArgs, testInfo, network));
+        // if (testAppArgs.calibTable != "")  // parse and set tensor scales
+        // {
+        //     NvDlaDebugPrintf("parsing calibration table...\n");
+        //     PROPAGATE_ERROR_FAIL(parseTensorScales(&testAppArgs, testInfo, network));
+        // }
+        // else    // use default or const scaling factors
+        // {
+            // NvDlaDebugPrintf("initialize all tensors with const scaling factors of 127...\n");
+             //PROPAGATE_ERROR_FAIL(generateTensorScales(&testAppArgs, testInfo, network));
+        // }
     }
 
     NvDlaDebugPrintf("attaching parsed network to the wisdom...\n");
@@ -635,15 +768,14 @@ fail:
         testInfo->wisdom = NULL;
     }
 
-    return;
+    return e;
 }
 
 
-void addInputOp(size_t input_name, int n, int c, int h, int w)
+void addInputOp(const char*  input_name, int n, int c, int h, int w)
 {   
     nvdla::Dims4 dims(n, c, h, w);
-    size_t input_ = (size_t) input_name;
-    std::string input_name_(std::to_string(input_));
+    std::string input_name_((input_name));
 
     auto input_tensor = network->addInput(input_name_.c_str(), dims);
     blobNameToTensor->add(input_name_.c_str(), input_tensor);
@@ -664,18 +796,16 @@ nvdla::Weights* addFloatWeights(const void* values, uint64_t count)
 }
 
 
-void addConvOp(size_t input_name, size_t conv_name, int numOutputChannels,
+void addConvOp(const char* input_name, const char* op_name, int numOutputChannels,
                                            int kernelH, int kernelW, 
                                            int padH, int padW, 
                                            int strideH, int strideW,
                                            int dilationH, int dilationW,
                                            const nvdla::Weights* weights, const nvdla::Weights* bias_weights, int numGroups)
 {
-    size_t input_ = (size_t) input_name;
-    std::string input_name_(std::to_string(input_));
+    std::string input_name_((input_name));
 
-    size_t conv_ = (size_t) conv_name;
-    std::string conv_name_(std::to_string(conv_));
+    std::string op_name_((op_name));
 
     assert(weights != nullptr && bias_weights != nullptr);
 
@@ -711,23 +841,116 @@ void addConvOp(size_t input_name, size_t conv_name, int numOutputChannels,
                                     kernelSize, tlPadding, brPadding, stride, dilation,
                                     *weights, *bias_weights, biasMode, numGroups);
 
-    conv_op->setName(conv_name_.c_str());
-    blobNameToTensor->add(conv_name_.c_str(), conv_op->getOutput(0));
+    conv_op->setName(op_name_.c_str());
+    blobNameToTensor->add(op_name_.c_str(), conv_op->getOutput(0));
 }
 
-void addReluOp(size_t input_name, size_t relu_name)
+
+void addFullyConnected(const char*  input_name, const char*  op_name, const nvdla::Weights* weights,
+const nvdla::Weights* bias_weights, int64_t num_output)
 {
-    size_t input_ = (size_t) input_name;
-    std::string input_name_(std::to_string(input_));
+    std::string input_name_((input_name));
+    std::string op_name_((op_name));
+
+    assert(weights != nullptr && bias_weights != nullptr);
+
+    nvdla::BiasMode biasMode = nvdla::BiasMode::bNONE;
+    if ( bias_weights->count == 0 )
+    {
+        biasMode = nvdla::BiasMode::bNONE;
+    }
+    else if ( bias_weights->count == 1 )
+    {
+        biasMode = nvdla::BiasMode::bUNIFORM;
+    }
+    else if ( bias_weights->count == num_output )
+    {
+        biasMode = nvdla::BiasMode::bCHANNEL;
+    }
+    else
+    {
+        biasMode = nvdla::BiasMode::bm_ELEMENTWISE;
+    }
+
+    auto input_tensor = blobNameToTensor->find(input_name_.c_str());
+    auto fc_op = network->addFullyConnected(input_tensor,
+    num_output, *weights, *bias_weights, biasMode);
+
+    fc_op->setName(op_name_.c_str());
+    blobNameToTensor->add(op_name_.c_str(), fc_op->getOutput(0));
+}
+
+
+void addReluOp(const char* input_name, const char* op_name)
+{
+    std::string input_name_(input_name);
 
     auto input_tensor = blobNameToTensor->find(input_name_.c_str());
 
-    size_t relu_ = (size_t) relu_name;
-    std::string relu_name_(std::to_string(relu_));
+    std::string op_name_(op_name);
 
     auto relu_op = network->addActivation(input_tensor, /*ActivationType::*/nvdla::kRELU);
-    relu_op->setName(relu_name_.c_str());
-    blobNameToTensor->add(relu_name_.c_str(), relu_op->getOutput(0));
+    relu_op->setName(op_name_.c_str());
+    blobNameToTensor->add(op_name_.c_str(), relu_op->getOutput(0));
+}
+
+
+void addSoftMaxOp(const char*  input_name, const char*  op_name)
+{
+    std::string input_name_((input_name));
+
+    auto input_tensor = blobNameToTensor->find(input_name_.c_str());
+
+    std::string op_name_((op_name));
+
+    auto op_ = network->addSoftMax(input_tensor);
+    op_->setName(op_name_.c_str());
+    blobNameToTensor->add(op_name_.c_str(), op_->getOutput(0));
+}
+
+
+
+TVM_DLL void addMaxPooling(const char*  input_name, const char*  op_name, int kernelH, int kernelW,
+                        int padH, int padW, int strideH, int strideW, int has_global_pooling)
+{
+    if (has_global_pooling)
+        return addPooling(input_name, op_name, kernelH, kernelW, padH, padW, strideH, strideW, nvdla::PoolingType::kMAX, true);
+    else
+        return addPooling(input_name, op_name, kernelH, kernelW, padH, padW, strideH, strideW, nvdla::PoolingType::kMAX, false);
+}
+
+TVM_DLL void addAveragePooling(const char*  input_name, const char*  op_name, int kernelH, int kernelW,
+                        int padH, int padW, int strideH, int strideW, int has_global_pooling)
+{
+    if (has_global_pooling)
+        return addPooling(input_name, op_name, kernelH, kernelW, padH, padW, strideH, strideW, nvdla::PoolingType::kAVERAGE, true);
+    else
+        return addPooling(input_name, op_name, kernelH, kernelW, padH, padW, strideH, strideW, nvdla::PoolingType::kAVERAGE, false);
+}
+
+
+static void addPooling(const char* input_name, const char* op_name, int kernelH, int kernelW,
+                        int padH, int padW, int strideH, int strideW, nvdla::PoolingType type, bool has_global_pooling)
+{
+    std::string input_name_((input_name));
+
+    std::string op_name_((op_name));
+    if (has_global_pooling){
+        printf("Currently doesn't support global pooling\n");
+        exit -1;
+    }
+
+    nvdla::Dims2 windowSize = nvdla::Dims2(kernelH, kernelW);
+    nvdla::Dims2 stride     = nvdla::Dims2(strideH, strideW);
+    nvdla::Dims2 tlPadding  = nvdla::Dims2(padH, padW);
+    nvdla::Dims2 brPadding  = nvdla::Dims2(padH, padW);
+
+    auto input_tensor = blobNameToTensor->find(input_name_.c_str());
+    // TODO: cross-correlation vs convolution
+    auto op = network->addPooling(input_tensor, type, windowSize, stride, tlPadding, brPadding);
+
+    op->setName(op_name_.c_str());
+    blobNameToTensor->add(op_name_.c_str(), op->getOutput(0));
 }
 
 
