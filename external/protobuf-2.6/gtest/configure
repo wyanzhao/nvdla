@@ -2300,7 +2300,7 @@ ac_config_files="$ac_config_files scripts/gtest-config"
 # Initialize Automake with various options. We require at least v1.9, prevent
 # pedantic complaints about package files, and enable various distribution
 # targets.
-am__api_version='1.14'
+am__api_version='1.16'
 
 # Find a good install program.  We prefer a C program (faster),
 # so one script is as good as another.  But avoid the broken or
