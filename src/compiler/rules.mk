@@ -104,8 +104,6 @@ INCLUDES += \
     -I$(ROOT)/port/linux/include \
     -I$(ROOT)/src/common/include \
     -I${PROTOBUF_INSTALL_DIR}/include \
-    -I/home/dev/Workspace/tvm/include \
-    -I/home/dev/Workspace/tvm/3rdparty/dlpack/include \
 
 MODULE_CPPFLAGS += \
     -DNVDLA_UTILS_ERROR_TAG="\"DLA\"" \

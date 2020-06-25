@@ -63,7 +63,7 @@ static TestInfo* testInfo = nullptr;
 static nvdla::INetwork* network = nullptr;
 static nvdla::caffe::IBlobNameToTensor* blobNameToTensor = nullptr;
 
-TVM_DLL void setNvdlaConfig( const char* config_name, const char *cprecision)
+void setNvdlaConfig( const char* config_name, const char *cprecision)
 {
     std::string computePrecision(cprecision);
 
@@ -81,7 +81,7 @@ TVM_DLL void setNvdlaConfig( const char* config_name, const char *cprecision)
     std::cout<< "Current configuration: "<< testAppArgs.configtarget<< " "<< computePrecision<< std::endl;
 }
 
-TVM_DLL void addScaleInfo(const char * name, float scale, float min, float max, int offset)
+void addScaleInfo(const char * name, float scale, float min, float max, int offset)
 {   
     std::string name_(name);
     ScaleInfo* scale_info = new(ScaleInfo);
@@ -96,7 +96,7 @@ TVM_DLL void addScaleInfo(const char * name, float scale, float min, float max, 
     }
 }
 
-TVM_DLL NvDlaError addQuantizationInfo(const TestAppArgs* appArgs, TestInfo *i, nvdla::INetwork* network)
+NvDlaError addQuantizationInfo(const TestAppArgs* appArgs, TestInfo *i, nvdla::INetwork* network)
 {
     NvDlaError e = NvDlaSuccess;
     NvDlaStatType stat;
@@ -910,7 +910,7 @@ void addSoftMaxOp(const char*  input_name, const char*  op_name)
 
 
 
-TVM_DLL void addMaxPooling(const char*  input_name, const char*  op_name, int kernelH, int kernelW,
+ void addMaxPooling(const char*  input_name, const char*  op_name, int kernelH, int kernelW,
                         int padH, int padW, int strideH, int strideW, int has_global_pooling)
 {
     if (has_global_pooling)
@@ -919,7 +919,7 @@ TVM_DLL void addMaxPooling(const char*  input_name, const char*  op_name, int ke
         return addPooling(input_name, op_name, kernelH, kernelW, padH, padW, strideH, strideW, nvdla::PoolingType::kMAX, false);
 }
 
-TVM_DLL void addAveragePooling(const char*  input_name, const char*  op_name, int kernelH, int kernelW,
+ void addAveragePooling(const char*  input_name, const char*  op_name, int kernelH, int kernelW,
                         int padH, int padW, int strideH, int strideW, int has_global_pooling)
 {
     if (has_global_pooling)
