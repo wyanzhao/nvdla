@@ -138,9 +138,13 @@ def batch_norm_input_shapes(op_input_shapes, input_tensors):
     else:
         return False
 
-def set_nvdla_config(target_config = "nv_full", compute_precison = "fp16"):
+support_config = [
+    'nv_small', 'nv_small_128', "nv_small_256", "nv_small_512", "nv_medium_256", "nv_medium_512", "nv_medium_1024", "nv_large", "nv_full"
+]
+
+def set_nvdla_config(target_config, compute_precison):
     global nvdla_graph_info
-    assert target_config == 'nv_full' or target_config == 'nv_small' or target_config == 'nv_large'
+    assert target_config in support_config
     assert compute_precison == 'int8' or compute_precison == 'fp16'
 
     nvdla_graph_info['nvdla_config']['target_config'] = target_config

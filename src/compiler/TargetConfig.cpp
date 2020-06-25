@@ -102,6 +102,7 @@ void TargetConfig::setName(const char* n)
 
     if ( isFullConfig() )
     {
+        printf("Using nv_full config\n");
         m_targetConfigParams.m_atomicCSize = 64;
         m_targetConfigParams.m_atomicKSize = 32;
         m_targetConfigParams.m_memoryAtomicSize = 32;
@@ -123,6 +124,7 @@ void TargetConfig::setName(const char* n)
     }
     else if ( isLargeConfig() )
     {
+        printf("Using nv_large config\n");
         m_targetConfigParams.m_atomicCSize = 64;
         m_targetConfigParams.m_atomicKSize = 32;
         m_targetConfigParams.m_memoryAtomicSize = 32;
@@ -142,8 +144,141 @@ void TargetConfig::setName(const char* n)
         m_targetConfigParams.m_isCompressWeightsCapable = false;
         m_targetConfigParams.m_isBatchModeCapable = false;
     }
+    else if ( isMedium1024Config() )
+    {
+        printf("Using nv_medium 1024 test config\n");
+        m_targetConfigParams.m_atomicCSize = 32;
+        m_targetConfigParams.m_atomicKSize = 32;
+        m_targetConfigParams.m_memoryAtomicSize = 32;
+        m_targetConfigParams.m_numConvBufBankAllotted = 32;
+        m_targetConfigParams.m_numConvBufEntriesPerBank = 512;
+        m_targetConfigParams.m_numConvBufEntryWidth = 32;
+        m_targetConfigParams.m_maxBatchSize = 0;
+        m_targetConfigParams.m_isPDPCapable = true;
+        m_targetConfigParams.m_isCDPCapable = true;
+        m_targetConfigParams.m_isSDPBiasCapable = true;
+        m_targetConfigParams.m_isSDPBatchNormCapable = true;
+        m_targetConfigParams.m_isSDPEltWiseCapable = false;
+        m_targetConfigParams.m_isSDPLutCapable = false;
+        m_targetConfigParams.m_isBDMACapable = false;
+        m_targetConfigParams.m_isRubikCapable = false;
+        m_targetConfigParams.m_isWinogradCapable = false;
+        m_targetConfigParams.m_isCompressWeightsCapable = false;
+        m_targetConfigParams.m_isBatchModeCapable = false;
+    }
+    else if ( isMedium512Config() )
+    {
+        printf("Using nv_medium 512 config\n");
+        m_targetConfigParams.m_atomicCSize = 32;
+        m_targetConfigParams.m_atomicKSize = 16;
+        m_targetConfigParams.m_memoryAtomicSize = 16;
+        m_targetConfigParams.m_numConvBufBankAllotted = 32;
+        m_targetConfigParams.m_numConvBufEntriesPerBank = 512;
+        m_targetConfigParams.m_numConvBufEntryWidth = 32;
+        m_targetConfigParams.m_maxBatchSize = 0;
+        m_targetConfigParams.m_isPDPCapable = true;
+        m_targetConfigParams.m_isCDPCapable = true;
+        m_targetConfigParams.m_isSDPBiasCapable = true;
+        m_targetConfigParams.m_isSDPBatchNormCapable = true;
+        m_targetConfigParams.m_isSDPEltWiseCapable = false;
+        m_targetConfigParams.m_isSDPLutCapable = false;
+        m_targetConfigParams.m_isBDMACapable = false;
+        m_targetConfigParams.m_isRubikCapable = false;
+        m_targetConfigParams.m_isWinogradCapable = false;
+        m_targetConfigParams.m_isCompressWeightsCapable = false;
+        m_targetConfigParams.m_isBatchModeCapable = false;
+    }
+    else if ( isMedium256Config() )
+    {
+        printf("Using nv_medium_256 config\n");
+        m_targetConfigParams.m_atomicCSize = 32;
+        m_targetConfigParams.m_atomicKSize = 8;
+        m_targetConfigParams.m_memoryAtomicSize = 8;
+        m_targetConfigParams.m_numConvBufBankAllotted = 32;
+        m_targetConfigParams.m_numConvBufEntriesPerBank = 512;
+        m_targetConfigParams.m_numConvBufEntryWidth = 32;
+        m_targetConfigParams.m_maxBatchSize = 0;
+        m_targetConfigParams.m_isPDPCapable = true;
+        m_targetConfigParams.m_isCDPCapable = true;
+        m_targetConfigParams.m_isSDPBiasCapable = true;
+        m_targetConfigParams.m_isSDPBatchNormCapable = true;
+        m_targetConfigParams.m_isSDPEltWiseCapable = false;
+        m_targetConfigParams.m_isSDPLutCapable = false;
+        m_targetConfigParams.m_isBDMACapable = false;
+        m_targetConfigParams.m_isRubikCapable = false;
+        m_targetConfigParams.m_isWinogradCapable = false;
+        m_targetConfigParams.m_isCompressWeightsCapable = false;
+        m_targetConfigParams.m_isBatchModeCapable = false;
+    }
+    else if ( isSmall512Config() )
+    {
+        printf("Using nv_small_512 config\n");
+        m_targetConfigParams.m_atomicCSize = 64;
+        m_targetConfigParams.m_atomicKSize = 8;
+        m_targetConfigParams.m_memoryAtomicSize = 8;
+        m_targetConfigParams.m_numConvBufBankAllotted = 32;
+        m_targetConfigParams.m_numConvBufEntriesPerBank = 128;
+        m_targetConfigParams.m_numConvBufEntryWidth = 64;
+        m_targetConfigParams.m_maxBatchSize = 0;
+        m_targetConfigParams.m_isPDPCapable = true;
+        m_targetConfigParams.m_isCDPCapable = true;
+        m_targetConfigParams.m_isSDPBiasCapable = true;
+        m_targetConfigParams.m_isSDPBatchNormCapable = true;
+        m_targetConfigParams.m_isSDPEltWiseCapable = false;
+        m_targetConfigParams.m_isSDPLutCapable = false;
+        m_targetConfigParams.m_isBDMACapable = false;
+        m_targetConfigParams.m_isRubikCapable = false;
+        m_targetConfigParams.m_isWinogradCapable = false;
+        m_targetConfigParams.m_isCompressWeightsCapable = false;
+        m_targetConfigParams.m_isBatchModeCapable = false;
+    }
+    else if ( isSmall256Config() )
+    {
+        printf("Using nv_small_256 config\n");
+        m_targetConfigParams.m_atomicCSize = 32;
+        m_targetConfigParams.m_atomicKSize = 8;
+        m_targetConfigParams.m_memoryAtomicSize = 8;
+        m_targetConfigParams.m_numConvBufBankAllotted = 32;
+        m_targetConfigParams.m_numConvBufEntriesPerBank = 128;
+        m_targetConfigParams.m_numConvBufEntryWidth = 32;
+        m_targetConfigParams.m_maxBatchSize = 0;
+        m_targetConfigParams.m_isPDPCapable = true;
+        m_targetConfigParams.m_isCDPCapable = true;
+        m_targetConfigParams.m_isSDPBiasCapable = true;
+        m_targetConfigParams.m_isSDPBatchNormCapable = true;
+        m_targetConfigParams.m_isSDPEltWiseCapable = false;
+        m_targetConfigParams.m_isSDPLutCapable = false;
+        m_targetConfigParams.m_isBDMACapable = false;
+        m_targetConfigParams.m_isRubikCapable = false;
+        m_targetConfigParams.m_isWinogradCapable = false;
+        m_targetConfigParams.m_isCompressWeightsCapable = false;
+        m_targetConfigParams.m_isBatchModeCapable = false;
+    }
+    else if ( isSmall128Config() )
+    {
+        printf("Using nv_small_128 config\n");
+        m_targetConfigParams.m_atomicCSize = 16;
+        m_targetConfigParams.m_atomicKSize = 8;
+        m_targetConfigParams.m_memoryAtomicSize = 8;
+        m_targetConfigParams.m_numConvBufBankAllotted = 32;
+        m_targetConfigParams.m_numConvBufEntriesPerBank = 128;
+        m_targetConfigParams.m_numConvBufEntryWidth = 16;
+        m_targetConfigParams.m_maxBatchSize = 0;
+        m_targetConfigParams.m_isPDPCapable = true;
+        m_targetConfigParams.m_isCDPCapable = true;
+        m_targetConfigParams.m_isSDPBiasCapable = true;
+        m_targetConfigParams.m_isSDPBatchNormCapable = true;
+        m_targetConfigParams.m_isSDPEltWiseCapable = false;
+        m_targetConfigParams.m_isSDPLutCapable = false;
+        m_targetConfigParams.m_isBDMACapable = false;
+        m_targetConfigParams.m_isRubikCapable = false;
+        m_targetConfigParams.m_isWinogradCapable = false;
+        m_targetConfigParams.m_isCompressWeightsCapable = false;
+        m_targetConfigParams.m_isBatchModeCapable = false;
+    }
     else if ( isSmallConfig() )
     {
+        printf("Using nv_small config\n");
         m_targetConfigParams.m_atomicCSize = 8;
         m_targetConfigParams.m_atomicKSize = 8;
         m_targetConfigParams.m_memoryAtomicSize = 8;

@@ -139,8 +139,14 @@ public:
         { }
     };
 
+    inline bool isMedium1024Config() { return m_instance_name == std::string("nv_medium_1024"); }
     inline bool isFullConfig() { return m_instance_name == std::string("nv_full"); }
     inline bool isLargeConfig() { return m_instance_name == std::string("nv_large"); }
+    inline bool isMedium256Config() { return m_instance_name == std::string("nv_medium_256"); }
+    inline bool isMedium512Config() { return m_instance_name == std::string("nv_medium_512"); }
+    inline bool isSmall512Config() { return m_instance_name == std::string("nv_small_512"); }
+    inline bool isSmall256Config() { return m_instance_name == std::string("nv_small_256"); }
+    inline bool isSmall128Config() { return m_instance_name == std::string("nv_small_128"); }
     inline bool isSmallConfig() { return m_instance_name == std::string("nv_small"); }
 
 protected:

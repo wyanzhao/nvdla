@@ -38,3 +38,18 @@
 *.exe
 *.out
 *.app
+
+# Log files
+*.log
+*.json
+
+# NVDLA executables
+*.nvdla
+
+# Temporary files
+*.1
+*.0
+*.m4
+*.in
+*.protobuf
+*.pyc
