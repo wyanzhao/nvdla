@@ -22,9 +22,7 @@ Toolchain:
 
 * `make -j$(nproc)`
 
-* `make install`
-
-After those steps, you can check if in your `${HOME}/.local/lib` directory has protobuf libs.
+After those steps, you can check if in your `nvdla/build/src/.libs` directory has protobuf libs.
 
 ## Build nvdla library
 
